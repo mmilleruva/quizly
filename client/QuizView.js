@@ -17,18 +17,21 @@ var QuizView = Backbone.View.extend({
 
   initialize: function(){
     this.render();
+    var _this = this;
+    this.listenTo(this.model.questionCollection,'change', function(){
+      _this.render();
+    });
   },
 
   render: function(){
     this.$el.html(template());
-
     this.quizNavView = new QuizNavView({
-      collection: this.collection,
+      collection: this.model.questionCollection,
       el: this.$el.find(".quiz-nav")
     });
 
     this.curQuestion = new QuestionView({
-      model: this.collection.at(0),
+      model: this.model.curQuestionModel,
       el: this.$el.find(".question")
     });
   }

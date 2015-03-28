@@ -10,7 +10,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "<nav class=\"navbar navbar-default\">\n  <div class=\"container-fluid\">\n    <!-- Brand and toggle get grouped for better mobile display -->\n    <div class=\"navbar-header\">\n      <button type=\"button\" class=\"navbar-toggle collapsed\" data-toggle=\"collapse\" data-target=\"#bs-example-navbar-collapse-1\">\n        <span class=\"sr-only\">Toggle navigation</span>\n        <span class=\"icon-bar\"></span>\n        <span class=\"icon-bar\"></span>\n        <span class=\"icon-bar\"></span>\n      </button>\n      <a class=\"navbar-brand\" href=\"#\">Quizly</a>\n    </div>\n\n    <!-- Collect the nav links, forms, and other content for toggling -->\n    <div class=\"collapse navbar-collapse\" id=\"bs-example-navbar-collapse-1\">\n      <ul class=\"nav navbar-nav\">\n        <li class=\"active\"><a href=\"#\">Home <span class=\"sr-only\">(current)</span></a></li>\n        <li><a href=\"#\">Quizzes</a></li>\n      </ul>\n\n      <ul class=\"nav navbar-nav navbar-right\">\n        <li class=\"dropdown\">\n          <a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-expanded=\"false\">My Profile <span class=\"caret\"></span></a>\n          <ul class=\"dropdown-menu\" role=\"menu\">\n            <li><a href=\"#\">Action</a></li>\n            <li><a href=\"#\">Another action</a></li>\n            <li><a href=\"#\">Something else here</a></li>\n            <li class=\"divider\"></li>\n            <li><a href=\"#\">Separated link</a></li>\n          </ul>\n        </li>\n      </ul>\n    </div><!-- /.navbar-collapse -->\n  </div><!-- /.container-fluid -->\n</nav>\n";
   });
 
-},{"hbsfy/runtime":23}],2:[function(require,module,exports){
+},{"hbsfy/runtime":24}],2:[function(require,module,exports){
 var Backbone = require('backbone');
 var template = require('./Header.hbs');
 
@@ -30,7 +30,7 @@ var HeaderView = Backbone.View.extend({
 
 module.exports = HeaderView;
 
-},{"./Header.hbs":1,"backbone":15}],3:[function(require,module,exports){
+},{"./Header.hbs":1,"backbone":16}],3:[function(require,module,exports){
 var Backbone = require('backbone');
 var QuestionModel = require('./QuestionModel');
 
@@ -40,7 +40,7 @@ var QuestionCollection = Backbone.Collection.extend({
 
 module.exports = QuestionCollection;
 
-},{"./QuestionModel":4,"backbone":15}],4:[function(require,module,exports){
+},{"./QuestionModel":4,"backbone":16}],4:[function(require,module,exports){
 var Backbone = require('backbone');
 var GetSetMixin = require('../mixins/GetSet')
 
@@ -55,6 +55,7 @@ var QuestionModel = Backbone.Model.extend({
   response: GetSetMixin("response"),
   prompt:   GetSetMixin("prompt"),
   index:    GetSetMixin("index"),
+  curQuestion:    GetSetMixin("curQuestion"),
 
   isCorrect: function(){
     return (this.response() == this.answer())
@@ -72,12 +73,21 @@ var QuestionModel = Backbone.Model.extend({
     props.isCorrect = this.isCorrect();
     props.feedback = this.feedBack();
     return props;
+  },
+
+  select: function(){
+    this.trigger(QuestionModel.triggers.SELECTED, this);
   }
 });
 
+QuestionModel.triggers = {
+  SELECTED: "questionModel:selected"
+};
+
+
 module.exports = QuestionModel;
 
-},{"../mixins/GetSet":14,"backbone":15}],5:[function(require,module,exports){
+},{"../mixins/GetSet":15,"backbone":16}],5:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var HandlebarsCompiler = require('hbsfy/runtime');
 module.exports = HandlebarsCompiler.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -120,7 +130,7 @@ function program2(depth0,data) {
   return buffer;
   });
 
-},{"hbsfy/runtime":23}],6:[function(require,module,exports){
+},{"hbsfy/runtime":24}],6:[function(require,module,exports){
 var Backbone = require('backbone');
 var QuestionModel = require('./QuestionModel')
 var template = require('./QuestionView.hbs');
@@ -154,7 +164,44 @@ var QuestionView = Backbone.View.extend({
 
 module.exports = QuestionView
 
-},{"./QuestionModel":4,"./QuestionView.hbs":5,"backbone":15}],7:[function(require,module,exports){
+},{"./QuestionModel":4,"./QuestionView.hbs":5,"backbone":16}],7:[function(require,module,exports){
+var Backbone = require('backbone');
+var GetSetMixin = require('../mixins/GetSet');
+
+var QuestionModel = require('./QuestionModel');
+var QuestionCollection = require('./QuestionCollection');
+
+var QuizModel = Backbone.Model.extend({
+
+  defaults:{
+    questions: []
+  },
+
+  initialize: function(){
+    this.questionCollection = new QuestionCollection(this.get('questions'));
+
+    if (this.questionCollection.length > 0) {
+      this.curQuestionModel = this.questionCollection.at(0);
+      this.curQuestionModel.curQuestion(true);
+    }
+    _this = this;
+    this.listenTo(this.questionCollection, QuestionModel.triggers.SELECTED, function(model){
+      _this.setCurQuestion(model);
+    });
+  },
+
+  setCurQuestion: function(model){
+    this.curQuestionModel.curQuestion(false);
+    this.curQuestionModel = model;
+    this.curQuestionModel.curQuestion(true);
+  }
+
+
+});
+
+module.exports = QuizModel;
+
+},{"../mixins/GetSet":15,"./QuestionCollection":3,"./QuestionModel":4,"backbone":16}],8:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var HandlebarsCompiler = require('hbsfy/runtime');
 module.exports = HandlebarsCompiler.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -164,39 +211,8 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
 
 function program1(depth0,data) {
   
-  var buffer = "", stack1;
-  buffer += "\n  ";
-  stack1 = helpers['if'].call(depth0, (depth0 && depth0.isCorrect), {hash:{},inverse:self.program(4, program4, data),fn:self.program(2, program2, data),data:data});
-  if(stack1 || stack1 === 0) { buffer += stack1; }
-  buffer += "\n";
-  return buffer;
-  }
-function program2(depth0,data) {
-  
   var buffer = "", stack1, helper;
-  buffer += "\n    <span class='quiz-nav-item-content quiz-nav-item-correct'>";
-  if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</span>\n  ";
-  return buffer;
-  }
-
-function program4(depth0,data) {
-  
-  var buffer = "", stack1, helper;
-  buffer += "\n    <span class='quiz-nav-item-content quiz-nav-item-wrong'>";
-  if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
-  else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
-  buffer += escapeExpression(stack1)
-    + "</span>\n  ";
-  return buffer;
-  }
-
-function program6(depth0,data) {
-  
-  var buffer = "", stack1, helper;
-  buffer += "\n  <span class='quiz-nav-item-content'>";
+  buffer += "\n  <span class='quiz-nav-item-content quiz-nav-item-current'>";
   if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
   else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
   buffer += escapeExpression(stack1)
@@ -204,13 +220,64 @@ function program6(depth0,data) {
   return buffer;
   }
 
-  stack1 = helpers['if'].call(depth0, (depth0 && depth0.response), {hash:{},inverse:self.program(6, program6, data),fn:self.program(1, program1, data),data:data});
+function program3(depth0,data) {
+  
+  var buffer = "", stack1;
+  buffer += "\n  ";
+  stack1 = helpers['if'].call(depth0, (depth0 && depth0.response), {hash:{},inverse:self.program(9, program9, data),fn:self.program(4, program4, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n";
+  return buffer;
+  }
+function program4(depth0,data) {
+  
+  var buffer = "", stack1;
+  buffer += "\n    ";
+  stack1 = helpers['if'].call(depth0, (depth0 && depth0.isCorrect), {hash:{},inverse:self.program(7, program7, data),fn:self.program(5, program5, data),data:data});
+  if(stack1 || stack1 === 0) { buffer += stack1; }
+  buffer += "\n  ";
+  return buffer;
+  }
+function program5(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n      <span class='quiz-nav-item-content quiz-nav-item-correct'>";
+  if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</span>\n    ";
+  return buffer;
+  }
+
+function program7(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n      <span class='quiz-nav-item-content quiz-nav-item-wrong'>";
+  if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</span>\n    ";
+  return buffer;
+  }
+
+function program9(depth0,data) {
+  
+  var buffer = "", stack1, helper;
+  buffer += "\n    <span class='quiz-nav-item-content'>";
+  if (helper = helpers.index) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.index); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</span>\n  ";
+  return buffer;
+  }
+
+  stack1 = helpers['if'].call(depth0, (depth0 && depth0.curQuestion), {hash:{},inverse:self.program(3, program3, data),fn:self.program(1, program1, data),data:data});
   if(stack1 || stack1 === 0) { buffer += stack1; }
   buffer += "\n";
   return buffer;
   });
 
-},{"hbsfy/runtime":23}],8:[function(require,module,exports){
+},{"hbsfy/runtime":24}],9:[function(require,module,exports){
 var Backbone = require('backbone');
 var template = require('./QuizNavItem.hbs');
 var QuestionModel = require('./QuestionModel')
@@ -221,13 +288,24 @@ var QuizNavItemView = Backbone.View.extend({
   className: 'quiz-nav-item',
   tagName: 'li',
 
+  events:{
+    'click .quiz-nav-item-content': 'select'
+  },
+
   initialize: function(){
     this.render();
+    this.listenTo(this.model, 'change', function(){
+      this.render();
+    });
   },
 
   render: function(){
     var rendered = template(this.model.toJSON());
     this.$el.html(rendered);
+  },
+
+  select: function(){
+    this.model.select();
   }
 
 });
@@ -235,7 +313,7 @@ var QuizNavItemView = Backbone.View.extend({
 module.exports = QuizNavItemView
 
 
-},{"./QuestionModel":4,"./QuizNavItem.hbs":7,"backbone":15}],9:[function(require,module,exports){
+},{"./QuestionModel":4,"./QuizNavItem.hbs":8,"backbone":16}],10:[function(require,module,exports){
 var Backbone = require('backbone');
 var template = require('./QuestionView.hbs');
 var QuizNavItemView = require('./QuizNavItemView');
@@ -263,7 +341,7 @@ var QuizNavView = Backbone.View.extend({
 
 module.exports = QuizNavView
 
-},{"./QuestionCollection":3,"./QuestionView.hbs":5,"./QuizNavItemView":8,"backbone":15}],10:[function(require,module,exports){
+},{"./QuestionCollection":3,"./QuestionView.hbs":5,"./QuizNavItemView":9,"backbone":16}],11:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var QuestionCollection = require('./QuestionCollection')
@@ -283,18 +361,21 @@ var QuizView = Backbone.View.extend({
 
   initialize: function(){
     this.render();
+    var _this = this;
+    this.listenTo(this.model.questionCollection,'change', function(){
+      _this.render();
+    });
   },
 
   render: function(){
     this.$el.html(template());
-
     this.quizNavView = new QuizNavView({
-      collection: this.collection,
+      collection: this.model.questionCollection,
       el: this.$el.find(".quiz-nav")
     });
 
     this.curQuestion = new QuestionView({
-      model: this.collection.at(0),
+      model: this.model.curQuestionModel,
       el: this.$el.find(".question")
     });
   }
@@ -304,45 +385,51 @@ var QuizView = Backbone.View.extend({
 
 module.exports = QuizView
 
-},{"./QuestionCollection":3,"./QuestionView":6,"./QuizNavView":9,"./templates/QuizView.hbs":13,"backbone":15}],11:[function(require,module,exports){
+},{"./QuestionCollection":3,"./QuestionView":6,"./QuizNavView":10,"./templates/QuizView.hbs":14,"backbone":16}],12:[function(require,module,exports){
 
-var QuestionCollection = require('../QuestionCollection');
+var QuizModel = require('../QuizModel');
 
-var getQuestionsById = function(id){
-  var questions = new QuestionCollection();
-  questions.add({prompt:"What is 1 + 1", answer: '2'});
-  questions.add({prompt:"What is 2 + 2", answer: '4'});
-  questions.add({prompt:"What is 3 + 3", answer: '6'});
-  questions.add({prompt:"What is 4 + 4", answer: '8'});
+var getQuizById = function(id){
+  var questions = new QuizModel({
+    questions: [
+      {prompt:"What is 1 + 1", answer: '2'},
+      {prompt:"What is 2 + 2", answer: '4'},
+      {prompt:"What is 3 + 3", answer: '6'},
+      {prompt:"What is 4 + 4", answer: '8'},
+      {prompt:"What is the capital of Virginia", answer: 'Richmond'},
+      {prompt:"What is my address?", answer: '4007'},
+    ]
+  });
   return questions;
 }
 
 module.exports = {
-  getQuestionsById: getQuestionsById
+  getQuizById: getQuizById
 };
 
 
 
 
 
-},{"../QuestionCollection":3}],12:[function(require,module,exports){
+},{"../QuizModel":7}],13:[function(require,module,exports){
 // Top level dependencies
 var $ = require('jquery');
 var Backbone = require('backbone');
 Backbone.$ = $;
 
 var QuizView = require('./QuizView');
+var QuizModel = require('./QuizModel');
 var questionService = require('./data-services/questionService');
 var HeaderView = require('./HeaderView');
 
-var questions = questionService.getQuestionsById(1);
+var quiz = questionService.getQuizById(1);
 
 var header = new HeaderView();
 var view = new QuizView({
-  collection: questions
+  model: quiz
 });
 
-},{"./HeaderView":2,"./QuizView":10,"./data-services/questionService":11,"backbone":15,"jquery":24}],13:[function(require,module,exports){
+},{"./HeaderView":2,"./QuizModel":7,"./QuizView":11,"./data-services/questionService":12,"backbone":16,"jquery":25}],14:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var HandlebarsCompiler = require('hbsfy/runtime');
 module.exports = HandlebarsCompiler.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -354,7 +441,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "<h2>Quiz</h2>\n\n<div class=\"question\"></div>\n<div class=\"quiz-nav\"></div>\n\n";
   });
 
-},{"hbsfy/runtime":23}],14:[function(require,module,exports){
+},{"hbsfy/runtime":24}],15:[function(require,module,exports){
 module.exports = function(propertyName){
   return function(val){
     if (val !== undefined) {
@@ -364,7 +451,7 @@ module.exports = function(propertyName){
   };
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1974,7 +2061,7 @@ module.exports = function(propertyName){
 
 }));
 
-},{"underscore":25}],16:[function(require,module,exports){
+},{"underscore":26}],17:[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -2007,7 +2094,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":17,"./handlebars/exception":18,"./handlebars/runtime":19,"./handlebars/safe-string":20,"./handlebars/utils":21}],17:[function(require,module,exports){
+},{"./handlebars/base":18,"./handlebars/exception":19,"./handlebars/runtime":20,"./handlebars/safe-string":21,"./handlebars/utils":22}],18:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2188,7 +2275,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":18,"./utils":21}],18:[function(require,module,exports){
+},{"./exception":19,"./utils":22}],19:[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -2217,7 +2304,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2355,7 +2442,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":17,"./exception":18,"./utils":21}],20:[function(require,module,exports){
+},{"./base":18,"./exception":19,"./utils":22}],21:[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -2367,7 +2454,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -2444,15 +2531,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":20}],22:[function(require,module,exports){
+},{"./safe-string":21}],23:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":16}],23:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":17}],24:[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":22}],24:[function(require,module,exports){
+},{"handlebars/runtime":23}],25:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
@@ -11659,7 +11746,7 @@ return jQuery;
 
 }));
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 //     Underscore.js 1.8.2
 //     http://underscorejs.org
 //     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -13197,4 +13284,4 @@ return jQuery;
   }
 }.call(this));
 
-},{}]},{},[12]);
+},{}]},{},[13]);

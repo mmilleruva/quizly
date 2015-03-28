@@ -1,35 +1,35 @@
 var Backbone = require('backbone');
-var GetSetMixin = require('../mixins/GetSet')
+var GetSetMixin = require('../mixins/GetSet');
+
+var QuestionModel = require('./QuestionModel');
+var QuestionCollection = require('./QuestionCollection');
 
 var QuizModel = Backbone.Model.extend({
-  defaults: {
-    "prompt":  "",
-    "answer": "",
-    "response":""
+
+  defaults:{
+    questions: []
   },
 
-  answer:   GetSetMixin("answer"),
-  response: GetSetMixin("response"),
-  prompt:   GetSetMixin("prompt"),
-  index:    GetSetMixin("index"),
+  initialize: function(){
+    this.questionCollection = new QuestionCollection(this.get('questions'));
 
-  isCorrect: function(){
-    return (this.response() == this.answer())
+    if (this.questionCollection.length > 0) {
+      this.curQuestionModel = this.questionCollection.at(0);
+      this.curQuestionModel.curQuestion(true);
+    }
+    _this = this;
+    this.listenTo(this.questionCollection, QuestionModel.triggers.SELECTED, function(model){
+      _this.setCurQuestion(model);
+    });
   },
 
-  feedBack: function(){
-    if (this.isCorrect()) {
-      return "Correct!"
-    };
-    return "Oops, try again."
-  },
-
-  toJSON: function(){
-    var props = Backbone.Model.prototype.toJSON.apply(this);
-    props.isCorrect = this.isCorrect();
-    props.feedback = this.feedBack();
-    return props;
+  setCurQuestion: function(model){
+    this.curQuestionModel.curQuestion(false);
+    this.curQuestionModel = model;
+    this.curQuestionModel.curQuestion(true);
   }
+
+
 });
 
-module.exports = QuestionModel;
+module.exports = QuizModel;

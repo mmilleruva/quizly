@@ -12,6 +12,7 @@ var QuestionModel = Backbone.Model.extend({
   response: GetSetMixin("response"),
   prompt:   GetSetMixin("prompt"),
   index:    GetSetMixin("index"),
+  curQuestion:    GetSetMixin("curQuestion"),
 
   isCorrect: function(){
     return (this.response() == this.answer())
@@ -29,7 +30,16 @@ var QuestionModel = Backbone.Model.extend({
     props.isCorrect = this.isCorrect();
     props.feedback = this.feedBack();
     return props;
+  },
+
+  select: function(){
+    this.trigger(QuestionModel.triggers.SELECTED, this);
   }
 });
+
+QuestionModel.triggers = {
+  SELECTED: "questionModel:selected"
+};
+
 
 module.exports = QuestionModel;
