@@ -1,0 +1,9 @@
+{{#if response}}
+  {{#if isCorrect}}
+    <span class='quiz-nav-item-content quiz-nav-item-correct'>{{index}}</span>
+  {{else}}
+    <span class='quiz-nav-item-content quiz-nav-item-wrong'>{{index}}</span>
+  {{/if}}
+{{else}}
+  <span class='quiz-nav-item-content'>{{index}}</span>
+{{/if}}

@@ -1,0 +1,20 @@
+<h2>Question</h2>
+<p>{{prompt}}</p>
+<form>
+  <br/>
+  <label for="response">Response:</label>
+  <input type="text" class="js-response" name="response" required
+    placeholder="Response" value="{{response}}">
+  <button class="btn btn-xlarge btn-primary js-submit">Submit</button>
+</form>
+
+{{#if response}}
+  {{#if isCorrect}}
+    <h3 class="question-correct">{{feedback}}</h3>
+  {{else}}
+    <h3 class="question-correct">{{feedback}}</h3>
+  {{/if}}
+{{/if}}
+
+
+
